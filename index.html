@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-CN" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多链钱包渗透器独立网 · Pro Edition</title><!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.0/dist/TronWeb.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.5/index.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-40px) scale(0.95); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.98); }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(139, 92, 246, 0.2); }
+      50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 0 60px rgba(139, 92, 246, 0.3); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .slide-in {
+      animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .pulse-animation {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .glass-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.6));
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .glass-card:hover::before {
+      left: 100%;
+    }
+    
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3), 
+                  0 0 80px rgba(139, 92, 246, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+    }
+    
+    .result-item {
+      animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 4px solid #6366f1;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .result-item::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1));
+      transition: width 0.3s;
+    }
+    
+    .result-item:hover::after {
+      width: 100%;
+    }
+    
+    .result-item:hover {
+      transform: translateX(10px) scale(1.02);
+      border-left-color: #22d3ee;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #22d3ee 0%, #818cf8 50%, #ec4899 100%);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s ease-in-out infinite;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-8px) scale(1.03);
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3),
+                  0 0 60px rgba(139, 92, 246, 0.2);
+      animation: glow 2s ease-in-out infinite;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #22d3ee, #818cf8, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+      text-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+      filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3));
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-primary:active::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.5),
+                  0 0 50px rgba(139, 92, 246, 0.3);
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    }
+    
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(-1px) scale(0.98);
+    }
+    
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid rgba(99, 102, 241, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-secondary::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-secondary:active::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      border-color: #6366f1;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .chain-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s;
+    }
+    
+    .chain-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .chain-tron {
+      background: linear-gradient(135deg, #eb0029, #ff4757);
+      color: white;
+      box-shadow: 0 4px 15px rgba(235, 0, 41, 0.4);
+    }
+    
+    .chain-eth {
+      background: linear-gradient(135deg, #627eea, #8b9fe8);
+      color: white;
+      box-shadow: 0 4px 15px rgba(98, 126, 234, 0.4);
+    }
+    
+    .chain-btc {
+      background: linear-gradient(135deg, #f7931a, #ffb84d);
+      color: white;
+      box-shadow: 0 4px 15px rgba(247, 147, 26, 0.4);
+    }
+    
+    .mono-text {
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+      font-size: 13px;
+      word-break: break-all;
+      line-height: 1.8;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      transition: all 0.3s;
+    }
+    
+    .mono-text:hover {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    input, select {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15),
+                  0 10px 30px rgba(99, 102, 241, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .scroll-container {
+      max-height: 600px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #6366f1 #1e293b;
+    }
+    
+    .scroll-container::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-track {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(51, 65, 85, 0.5));
+      border-radius: 10px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #818cf8, #a78bfa);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.7);
+    }
+    
+    label {
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    
+    .copy-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .copy-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .speed-toggle-slider {
+      background: rgba(71, 85, 105, 0.5);
+    }
+    
+    .speed-toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    input:checked + .speed-toggle-slider {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+    }
+    
+    input:checked + .speed-toggle-slider::before {
+      transform: translateX(28px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e293b 100%); backdrop-filter: blur(20px); color: #e2e8f0;"><!-- Header -->
+  <header class="px-10 py-8 border-b" style="border-color: rgba(99, 102, 241, 0.2); backdrop-filter: blur(20px); background: rgba(15, 23, 42, 0.8); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);">
+   <div class="max-w-7xl mx-auto flex justify-between items-center fade-in">
+    <h1 id="mainTitle" class="text-4xl font-extrabold tracking-tight flex items-center gap-3"><span class="text-5xl float-animation">🔐</span> <span>多链 <span class="gradient-text">钱包渗透器2.0</span></span></h1>
+    <div id="versionBadge" class="px-6 py-3 rounded-full text-sm font-bold" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)); color: #22d3ee; border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);">
+     ⚡ Pro Edition
+    </div>
+   </div>
+  </header><!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-10 py-12">
+   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><!-- Left Panel - Configuration -->
+    <section class="glass-card rounded-3xl p-10 shadow-2xl fade-in">
+     <h2 id="systemPanelTitle" class="text-3xl font-bold mb-8 flex items-center"><span class="text-4xl mr-4 float-animation">⚙️</span> <span style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">渗透��统</span></h2><!-- Chain Selection -->
+     <div class="mb-7"><label id="networkLabel" class="block text-sm font-semibold mb-3 opacity-90">区块链网络</label> <select id="chain" class="w-full px-5 py-4 rounded-xl text-base font-medium" style="background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(99, 102, 241, 0.4); color: #e2e8f0; cursor: pointer;"> <option value="tron">🔴 TRON (TRC20)</option> <option value="eth">🔵 Ethereum (ERC20)</option> <option value="btc">🟠 Bitcoin (Legacy)</option> </select>
+     </div><!-- Country/Region Selection -->
+     <div class="mb-7"><label class="block text-sm font-semibold mb-3 opacity-90">🌐 目标国家/地区</label> <select id="country" class="w-full px-5 py-4 rounded-xl text-base font-medium" style="background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(99, 102, 241, 0.4); color: #e2e8f0; cursor: pointer;"> <option value="global">🌍 全球 (Global)</option> <option value="us">🇺🇸 美国 (United States)</option> <option value="cn">🇨🇳 中国 (China)</option> <option value="jp">🇯🇵 日本 (Japan)</option> <option value="kr">🇰🇷 韩国 (South Korea)</option> <option value="gb">🇬🇧 英国 (United Kingdom)</option> <option value="de">🇩🇪 德国 (Germany)</option> <option value="fr">🇫🇷 法国 (France)</option> <option value="ca">🇨�� 加拿大 (Canada)</option> <option value="au">🇦🇺 澳大利亚 (Australia)</option> <option value="sg">🇸🇬 新加坡 (Singapore)</option> <option value="hk">🇭🇰 香港 (Hong Kong)</option> <option value="tw">🇹🇼 台湾 (Taiwan)</option> <option value="ru">🇷🇺 俄罗斯 (Russia)</option> <option value="in">🇮🇳 印��� (India)</option> <option value="br">🇧🇷 巴西 (Brazil)</option> <option value="mx">🇲🇽 墨西哥 (Mexico)</option> <option value="es">🇪🇸 西班牙 (Spain)</option> <option value="it">🇮🇹 意大利 (Italy)</option> <option value="nl">🇳🇱 荷兰 (Netherlands)</option> <option value="se">🇸🇪 瑞典 (Sweden)</option> <option value="ch">🇨🇭 瑞士 (Switzerland)</option> <option value="ae">🇦🇪 阿联酋 (UAE)</option> <option value="sa">🇸🇦 ��特���拉伯 (Saudi Arabia)</option> <option value="tr">🇹🇷 土耳其 (Turkey)</option> <option value="za">🇿�� 南非 (South Africa)</option> <option value="th">🇹🇭 泰国 (Thailand)</option> <option value="vn">🇻🇳 越南 (Vietnam)</option> <option value="id">🇮🇩 印度尼西亚 (Indonesia)</option> <option value="my">🇲🇾 马来西亚 (Malaysia)</option> <option value="ph">🇵🇭 菲律宾 (Philippines)</option> </select>
+     </div><!-- Speed Booster Toggle -->
+     <div class="mb-7 p-5 rounded-xl" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(139, 92, 246, 0.1)); border: 2px solid rgba(236, 72, 153, 0.3);">
+      <div class="flex items-center justify-between">
+       <div class="flex items-center gap-3"><span class="text-2xl">🚀</span>
+        <div>
+         <div class="text-sm font-bold" style="color: #ec4899;">
+          提速器
+         </div>
+         <div class="text-xs opacity-75 mt-1">
+          开启后速度提升
+         </div>
+        </div>
+       </div><label class="relative inline-block w-14 h-7 cursor-pointer"> <input type="checkbox" id="speedBooster" class="opacity-0 w-0 h-0"> <span class="speed-toggle-slider absolute top-0 left-0 right-0 bottom-0 rounded-full transition-all" style="background: rgba(71, 85, 105, 0.5);"></span> </label>
+      </div>
+     </div><!-- Successfully Cracked Addresses List -->
+     <div class="mb-7"><label class="block text-sm font-semibold mb-3 opacity-90">已成功破解地址</label>
+      <div id="crackedList" class="rounded-xl p-4" style="background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(34, 211, 238, 0.4); min-height: 120px; max-height: 200px; overflow-y: auto;">
+       <div class="opacity-50 text-center py-6 text-sm">
+        暂无成功破解的地址...
+       </div>
+      </div>
+     </div><!-- Private Key Generation Process -->
+     <div class="mb-7"><label class="block text-sm font-semibold mb-3 opacity-90">私钥生成过程</label>
+      <div id="keygenProcess" class="rounded-xl p-4 mono-text" style="background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(139, 92, 246, 0.4); min-height: 80px; max-height: 120px; overflow-y: auto; color: #a78bfa; font-size: 11px; line-height: 1.6;">
+       <div class="opacity-50 text-center py-6">
+        等待开始破解...
+       </div>
+      </div>
+     </div><!-- Action Buttons -->
+     <div class="flex gap-5 mb-6"><button id="start" class="btn-primary flex-1 py-5 rounded-xl font-bold text-lg text-white"> <span id="startButtonText">✨ 开始破解</span> </button> <button id="stop" class="btn-secondary flex-1 py-5 rounded-xl font-bold text-lg text-white" disabled> <span id="stopButtonText">⏸️ 停止</span> </button>
+     </div><!-- Statistics Cards -->
+     <div class="grid grid-cols-2 gap-5 mt-8">
+      <div class="stat-card rounded-2xl p-6 text-center">
+       <div class="text-4xl mb-3 float-animation">
+        🎯
+       </div>
+       <div class="stat-number" id="tries">
+        0
+       </div>
+       <div id="triesLabel" class="text-xs font-semibold opacity-75 mt-2">
+        尝试次数
+       </div>
+      </div>
+      <div class="stat-card rounded-2xl p-6 text-center">
+       <div class="text-4xl mb-3 float-animation" style="animation-delay: 0.2s;">
+        ⚡️
+       </div>
+       <div class="stat-number" id="speed">
+        0
+       </div>
+       <div id="speedLabel" class="text-xs font-semibold opacity-75 mt-2">
+        速度 / 秒
+       </div>
+      </div>
+     </div><!-- Runtime Display -->
+     <div class="stat-card rounded-2xl p-6 text-center mt-5">
+      <div class="text-4xl mb-3 float-animation" style="animation-delay: 0.4s;">
+       ⏱️
+      </div>
+      <div class="stat-number" id="runtime">
+       00:00:00
+      </div>
+      <div id="runtimeLabel" class="text-xs font-semibold opacity-75 mt-2">
+       运行时间
+      </div>
+     </div>
+    </section><!-- Right Panel - Results -->
+    <section class="glass-card rounded-3xl p-10 shadow-2xl fade-in">
+     <h2 id="resultsPanelTitle" class="text-3xl font-bold mb-8 flex items-center"><span class="text-4xl mr-4 float-animation" style="animation-delay: 0.3s;">🎯</span> <span style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">渗透过程</span></h2><!-- Results Container -->
+     <div id="results" class="scroll-container space-y-4">
+      <div class="text-center py-24 opacity-50">
+       <div class="text-7xl mb-5 float-animation">
+        🔍
+       </div>
+       <div class="text-xl font-semibold">
+        等待开始破解...
+       </div>
+       <div class="text-sm opacity-75 mt-2">
+        点击"开始破解"按钮启动破解程序
+       </div>
+      </div>
+     </div>
+    </section>
+   </div><!-- Favorite Address Section -->
+   <section class="glass-card rounded-3xl p-10 shadow-2xl fade-in mt-8">
+    <div class="mb-8">
+     <h2 class="text-3xl font-bold flex items-center"><span class="text-4xl mr-4 float-animation" style="animation-delay: 0.6s;">⭐</span> <span style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">单破解地址</span></h2>
+    </div><!-- Favorite Address Form -->
+    <div class="mb-8 p-6 rounded-2xl" style="background: linear-gradient(135deg, rgba(34, 211, 238, 0.08), rgba(139, 92, 246, 0.08)); border: 2px solid rgba(34, 211, 238, 0.3);">
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-4">
+      <div><label class="block text-sm font-semibold mb-2 opacity-90">网络</label> <select id="bindNetwork" class="w-full px-4 py-3 rounded-xl text-base font-medium" style="background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(99, 102, 241, 0.4); color: #e2e8f0; cursor: pointer;"> <option value="TRON">TRON</option> <option value="ETHEREUM">ETHEREUM</option> <option value="BITCOIN">BITCOIN</option> </select>
+      </div>
+      <div><label class="block text-sm font-semibold mb-2 opacity-90">钱包地址</label> <input id="bindAddress" type="text" placeholder="输入钱包地址" class="w-full px-4 py-3 rounded-xl text-base" style="background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(99, 102, 241, 0.4); color: #e2e8f0;">
+      </div>
+      <div><button id="transferBtn" class="w-full py-3 rounded-xl font-bold text-base text-white transition-all" style="background: linear-gradient(135deg, #22d3ee, #06b6d4); box-shadow: 0 4px 15px rgba(34, 211, 238, 0.4);"> 🔓 开始破解 </button>
+      </div>
+     </div><!-- Private Key Generation Process for Favorites -->
+     <div><label class="block text-sm font-semibold mb-2 opacity-90">私钥破解过程</label>
+      <div id="favoriteKeygenProcess" class="rounded-xl p-4 mono-text" style="background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(139, 92, 246, 0.4); min-height: 60px; max-height: 100px; overflow-y: auto; color: #a78bfa; font-size: 11px; line-height: 1.6;">
+       <div class="opacity-50 text-center py-4">
+        等待添加破解地址...
+       </div>
+      </div>
+     </div>
+    </div><!-- Favorite Table Container -->
+    <div class="scroll-container" style="max-height: 500px;">
+     <table class="w-full">
+      <thead style="position: sticky; top: 0; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95)); backdrop-filter: blur(10px); z-index: 10;">
+       <tr style="border-bottom: 2px solid rgba(99, 102, 241, 0.4);">
+        <th class="text-left px-6 py-4 text-sm font-bold opacity-90" style="width: 20%;">网络</th>
+        <th class="text-left px-6 py-4 text-sm font-bold opacity-90" style="width: 35%;">钱包地址</th>
+        <th class="text-left px-6 py-4 text-sm font-bold opacity-90" style="width: 35%;">私钥</th>
+        <th class="text-center px-6 py-4 text-sm font-bold opacity-90" style="width: 10%;">操作</th>
+       </tr>
+      </thead>
+      <tbody id="bindingTableBody">
+       <tr>
+        <td colspan="4" class="px-6 py-20 text-center">
+         <div class="text-5xl mb-4 opacity-30">
+          📭
+         </div>
+         <div class="text-lg font-semibold opacity-50">
+          列表为空
+         </div>
+         <div class="text-sm opacity-30 mt-2">
+          暂无破解地址
+         </div></td>
+       </tr>
+      </tbody>
+     </table>
+    </div>
+   </section>
+  </main><!-- Footer -->
+  <footer class="mt-20 py-8 text-center border-t" style="border-color: rgba(99, 102, 241, 0.2); background: rgba(15, 23, 42, 0.5);">
+   <p id="footerWarning" class="text-sm opacity-60 flex items-center justify-center gap-2"><span class="text-xl">⚠️</span> <span>前端2026钱包渗入器</span></p>
+  </footer>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      main_title: "多链 钱包渗透器2.0",
+      version_badge: "⚡ Pro Edition",
+      system_panel_title: "渗透系统",
+      network_label: "区块链网络",
+      start_button_text: "✨ 开始破解",
+      stop_button_text: "⏸️ 停止",
+      tries_label: "尝试次数",
+      speed_label: "速度 / 秒",
+      runtime_label: "运行时间",
+      results_panel_title: "渗透过程",
+      footer_warning: "前端2026钱包渗入器"
+    };
+
+    // Country flag mapping
+    const countryFlags = {
+      'global': '🌍',
+      'us': '🇺🇸',
+      'cn': '🇨🇳',
+      'jp': '🇯🇵',
+      'kr': '🇰🇷',
+      'gb': '🇬🇧',
+      'de': '🇩🇪',
+      'fr': '🇫🇷',
+      'ca': '🇨🇦',
+      'au': '🇦🇺',
+      'sg': '🇸🇬',
+      'hk': '🇭🇰',
+      'tw': '🇹🇼',
+      'ru': '🇷���',
+      'in': '🇮🇳',
+      'br': '🇧🇷',
+      'mx': '🇲🇽',
+      'es': '🇪🇸',
+      'it': '🇮🇹',
+      'nl': '🇳🇱',
+      'se': '🇸🇪',
+      'ch': '🇨🇭',
+      'ae': '🇦🇪',
+      'sa': '🇸🇦',
+      'tr': '🇹🇷',
+      'za': '🇿🇦',
+      'th': '🇹🇭',
+      'vn': '🇻🇳',
+      'id': '🇮🇩',
+      'my': '🇲🇾',
+      'ph': '🇵🇭'
+    };
+
+    // Apply config to UI
+    async function onConfigChange(config) {
+      const mainTitleEl = document.getElementById('mainTitle');
+      if (mainTitleEl) {
+        const titleText = config.main_title || defaultConfig.main_title;
+        mainTitleEl.innerHTML = `
+          <span class="text-5xl float-animation">🔐</span>
+          <span>${titleText.replace('钱包渗透器2.0', '<span class="gradient-text">钱包渗透器2.0</span>')}</span>
+        `;
+      }
+      
+      const versionBadgeEl = document.getElementById('versionBadge');
+      if (versionBadgeEl) {
+        versionBadgeEl.textContent = config.version_badge || defaultConfig.version_badge;
+      }
+      
+      const systemPanelTitleEl = document.getElementById('systemPanelTitle');
+      if (systemPanelTitleEl) {
+        const titleText = config.system_panel_title || defaultConfig.system_panel_title;
+        systemPanelTitleEl.innerHTML = `
+          <span class="text-4xl mr-4 float-animation">⚙️</span>
+          <span style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${titleText}</span>
+        `;
+      }
+      
+      const networkLabelEl = document.getElementById('networkLabel');
+      if (networkLabelEl) {
+        networkLabelEl.textContent = config.network_label || defaultConfig.network_label;
+      }
+      
+      const startButtonTextEl = document.getElementById('startButtonText');
+      if (startButtonTextEl) {
+        startButtonTextEl.textContent = config.start_button_text || defaultConfig.start_button_text;
+      }
+      
+      const stopButtonTextEl = document.getElementById('stopButtonText');
+      if (stopButtonTextEl) {
+        stopButtonTextEl.textContent = config.stop_button_text || defaultConfig.stop_button_text;
+      }
+      
+      const triesLabelEl = document.getElementById('triesLabel');
+      if (triesLabelEl) {
+        triesLabelEl.textContent = config.tries_label || defaultConfig.tries_label;
+      }
+      
+      const speedLabelEl = document.getElementById('speedLabel');
+      if (speedLabelEl) {
+        speedLabelEl.textContent = config.speed_label || defaultConfig.speed_label;
+      }
+      
+      const runtimeLabelEl = document.getElementById('runtimeLabel');
+      if (runtimeLabelEl) {
+        runtimeLabelEl.textContent = config.runtime_label || defaultConfig.runtime_label;
+      }
+      
+      const resultsPanelTitleEl = document.getElementById('resultsPanelTitle');
+      if (resultsPanelTitleEl) {
+        const titleText = config.results_panel_title || defaultConfig.results_panel_title;
+        resultsPanelTitleEl.innerHTML = `
+          <span class="text-4xl mr-4 float-animation" style="animation-delay: 0.3s;">🎯</span>
+          <span style="background: linear-gradient(135deg, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${titleText}</span>
+        `;
+      }
+      
+      const footerWarningEl = document.getElementById('footerWarning');
+      if (footerWarningEl) {
+        footerWarningEl.innerHTML = `
+          <span class="text-xl">⚠️</span>
+          <span>${config.footer_warning || defaultConfig.footer_warning}</span>
+        `;
+      }
+    }
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig: defaultConfig,
+        onConfigChange: onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => {
+          return new Map([
+            ["main_title", config.main_title || defaultConfig.main_title],
+            ["version_badge", config.version_badge || defaultConfig.version_badge],
+            ["system_panel_title", config.system_panel_title || defaultConfig.system_panel_title],
+            ["network_label", config.network_label || defaultConfig.network_label],
+            ["start_button_text", config.start_button_text || defaultConfig.start_button_text],
+            ["stop_button_text", config.stop_button_text || defaultConfig.stop_button_text],
+            ["tries_label", config.tries_label || defaultConfig.tries_label],
+            ["speed_label", config.speed_label || defaultConfig.speed_label],
+            ["runtime_label", config.runtime_label || defaultConfig.runtime_label],
+            ["results_panel_title", config.results_panel_title || defaultConfig.results_panel_title],
+            ["footer_warning", config.footer_warning || defaultConfig.footer_warning]
+          ]);
+        }
+      });
+    }
+
+    let running = false;
+    let tries = 0, found = 0;
+    let lastTime = Date.now(), lastTries = 0;
+    let startTime = 0;
+    let runtimeInterval = null;
+    let currentSpeed = 0;
+    let offlineCheckInterval = null;
+    
+    // Speed booster event listener
+    document.addEventListener('DOMContentLoaded', function() {
+      const speedBooster = document.getElementById('speedBooster');
+      speedBooster.addEventListener('change', function() {
+        if (running) {
+          const results = document.getElementById('results');
+          const boostDiv = document.createElement('div');
+          boostDiv.className = 'result-item rounded-2xl p-6 mb-4';
+          
+          if (this.checked) {
+            boostDiv.style.background = 'rgba(236, 72, 153, 0.15)';
+            boostDiv.style.border = '2px solid rgba(236, 72, 153, 0.5)';
+            boostDiv.style.borderLeft = '4px solid #ec4899';
+            
+            boostDiv.innerHTML = `
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl">🚀</span>
+                <span class="text-lg font-bold" style="color: #ec4899;">提速器已启动</span>
+              </div>
+              <div class="text-sm opacity-75">破解速度已提升至 92-114/秒，正在加速生成中...</div>
+            `;
+          } else {
+            boostDiv.style.background = 'rgba(100, 116, 139, 0.15)';
+            boostDiv.style.border = '2px solid rgba(100, 116, 139, 0.5)';
+            boostDiv.style.borderLeft = '4px solid #64748b';
+            
+            boostDiv.innerHTML = `
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl">⏸��</span>
+                <span class="text-lg font-bold" style="color: #94a3b8;">提速器已关闭</span>
+              </div>
+              <div class="text-sm opacity-75">恢复正常速度运行</div>
+            `;
+          }
+          
+          results.prepend(boostDiv);
+          
+          setTimeout(() => {
+            boostDiv.style.transition = 'all 0.5s ease-out';
+            boostDiv.style.opacity = '0';
+            boostDiv.style.transform = 'translateX(100px)';
+            setTimeout(() => {
+              boostDiv.remove();
+            }, 500);
+          }, 3000);
+        }
+      });
+    });
+
+    function stopGeneration() {
+      running = false;
+      document.getElementById('start').disabled = false;
+      document.getElementById('start').classList.remove('pulse-animation');
+      document.getElementById('stop').disabled = true;
+      
+      if (runtimeInterval) {
+        clearInterval(runtimeInterval);
+        runtimeInterval = null;
+      }
+      
+      if (offlineCheckInterval) {
+        clearInterval(offlineCheckInterval);
+        offlineCheckInterval = null;
+      }
+    }
+    
+    function showOfflineMessage() {
+      const results = document.getElementById('results');
+      const offlineDiv = document.createElement('div');
+      offlineDiv.className = 'result-item rounded-2xl p-6 mb-4';
+      offlineDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+      offlineDiv.style.border = '2px solid rgba(239, 68, 68, 0.5)';
+      offlineDiv.style.borderLeft = '4px solid #ef4444';
+      
+      offlineDiv.innerHTML = `
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-3xl">⚠️</span>
+          <span class="text-lg font-bold" style="color: #ef4444;">网络已断开</span>
+        </div>
+        <div class="text-sm opacity-75">检测���网络��������断，生成过程已自动停止</div>
+      `;
+      
+      results.prepend(offlineDiv);
+      
+      setTimeout(() => {
+        offlineDiv.remove();
+      }, 5000);
+    }
+
+    function updateStats() {
+      document.getElementById('tries').innerText = tries.toLocaleString();
+      
+      const now = Date.now();
+      const diff = (now - lastTime) / 1000;
+      if (diff >= 0.15) {
+        const speedBoosterEnabled = document.getElementById('speedBooster').checked;
+        
+        let minSpeed, maxSpeed;
+        if (speedBoosterEnabled) {
+          minSpeed = 92;
+          maxSpeed = 114;
+        } else {
+          minSpeed = 60;
+          maxSpeed = 90;
+        }
+        
+        const targetSpeed = Math.floor(Math.random() * (maxSpeed - minSpeed + 1)) + minSpeed;
+        
+        if (currentSpeed === 0) {
+          currentSpeed = targetSpeed;
+        } else {
+          const speedDiff = targetSpeed - currentSpeed;
+          currentSpeed += Math.sign(speedDiff) * Math.min(Math.abs(speedDiff), 5);
+        }
+        
+        document.getElementById('speed').innerText = currentSpeed.toLocaleString();
+        lastTime = now;
+        lastTries = tries;
+      }
+    }
+    
+    function updateRuntime() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const hours = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+      const minutes = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+      const seconds = (elapsed % 60).toString().padStart(2, '0');
+      document.getElementById('runtime').innerText = `${hours}:${minutes}:${seconds}`;
+    }
+
+    function generate() {
+      const chain = document.getElementById('chain').value;
+      const country = document.getElementById('country').value;
+      const countryFlag = countryFlags[country] || '🌍';
+      const keygenProcess = document.getElementById('keygenProcess');
+
+      // Remove empty state
+      const results = document.getElementById('results');
+      if (results.querySelector('.text-center')) {
+        results.innerHTML = '';
+      }
+      
+      // Clear keygen process empty state
+      if (keygenProcess.querySelector('.opacity-50')) {
+        keygenProcess.innerHTML = '';
+      }
+
+      function generateLoop() {
+        if (!running) return;
+        
+        // Check network connection - stop if offline
+        if (!navigator.onLine) {
+          stopGeneration();
+          showOfflineMessage();
+          return;
+        }
+        
+        // Generate addresses at a controlled pace
+        for (let i = 0; i < 3; i++) {
+          if (!running) break;
+          
+          tries++;
+          
+          let address = '', pk = '';
+
+          try {
+            if (chain === 'tron') {
+              const acc = window.TronWeb.utils.accounts.generateAccount();
+              address = acc.address.base58;
+              pk = acc.privateKey;
+            }
+
+            if (chain === 'eth') {
+              const wallet = ethers.Wallet.createRandom();
+              address = wallet.address;
+              pk = wallet.privateKey;
+            }
+
+            if (chain === 'btc') {
+              const keyPair = bitcoinjs.ECPair.makeRandom();
+              const { address: btcAddr } = bitcoinjs.payments.p2pkh({ pubkey: keyPair.publicKey });
+              address = btcAddr;
+              pk = keyPair.toWIF();
+            }
+            
+            // Display private key in generation process
+            if (pk) {
+              const processLine = document.createElement('div');
+              processLine.style.marginBottom = '4px';
+              processLine.innerHTML = `<span style="color: #6366f1;">🔑</span> ${pk}`;
+              keygenProcess.appendChild(processLine);
+              
+              // Keep only last 20 lines
+              while (keygenProcess.children.length > 20) {
+                keygenProcess.removeChild(keygenProcess.firstChild);
+              }
+              
+              // Auto scroll to bottom
+              keygenProcess.scrollTop = keygenProcess.scrollHeight;
+            }
+          } catch (error) {
+            console.error('Generation error:', error);
+            continue;
+          }
+
+          // Show address results in the right panel
+          if (address) {
+            found++;
+            
+            // Add to results panel
+            const div = document.createElement('div');
+            div.className = 'result-item rounded-2xl p-6';
+            div.style.background = 'rgba(30, 41, 59, 0.8)';
+            div.style.border = '1px solid rgba(99, 102, 241, 0.3)';
+            
+            const chainBadge = chain === 'tron' ? 'chain-tron' : chain === 'eth' ? 'chain-eth' : 'chain-btc';
+            const chainName = chain === 'tron' ? 'TRON' : chain === 'eth' ? 'ETHEREUM' : 'BITCOIN';
+            
+            const addressCopyId = `copy-addr-${Date.now()}-${Math.random()}`;
+            const pkCopyId = `copy-pk-${Date.now()}-${Math.random()}`;
+            
+            div.innerHTML = `
+              <div class="flex items-center justify-between mb-4">
+                <span class="chain-badge ${chainBadge}">${chainName}</span>
+                <span style="font-size: 1.5rem;">${countryFlag}</span>
+              </div>
+              <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-semibold opacity-75">钱包地址</div>
+                  <button id="${addressCopyId}" class="copy-btn px-3 py-1 rounded-lg text-xs font-bold transition-all" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3);">
+                    📋 复制
+                  </button>
+                </div>
+                <div class="mono-text" style="color: #22d3ee;">${address}</div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-semibold opacity-75">私钥</div>
+                  <button id="${pkCopyId}" class="copy-btn px-3 py-1 rounded-lg text-xs font-bold transition-all" style="background: rgba(251, 113, 133, 0.1); color: #fb7185; border: 1px solid rgba(251, 113, 133, 0.3);">
+                    📋 复制
+                  </button>
+                </div>
+                <div class="mono-text" style="color: #fb7185;">${pk}</div>
+              </div>
+            `;
+            
+            results.prepend(div);
+            
+            // AUTO CLEANUP: Keep only last 10 items
+            const allResults = results.querySelectorAll('.result-item');
+            if (allResults.length > 10) {
+              for (let i = 10; i < allResults.length; i++) {
+                allResults[i].style.transition = 'all 0.5s ease-out';
+                allResults[i].style.opacity = '0';
+                allResults[i].style.transform = 'translateX(100px)';
+                setTimeout(() => {
+                  allResults[i].remove();
+                }, 500);
+              }
+            }
+            
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+              const addrBtn = document.getElementById(addressCopyId);
+              const pkBtn = document.getElementById(pkCopyId);
+              
+              if (addrBtn) {
+                addrBtn.addEventListener('click', function() {
+                  copyToClipboard(address, this);
+                });
+              }
+              
+              if (pkBtn) {
+                pkBtn.addEventListener('click', function() {
+                  copyToClipboard(pk, this);
+                });
+              }
+            }, 0);
+          }
+        }
+
+        updateStats();
+        setTimeout(generateLoop, 100);
+      }
+      
+      generateLoop();
+    }
+
+    document.getElementById('start').onclick = () => {
+      running = true;
+      startTime = Date.now();
+      document.getElementById('start').disabled = true;
+      document.getElementById('start').classList.add('pulse-animation');
+      document.getElementById('stop').disabled = false;
+      
+      runtimeInterval = setInterval(updateRuntime, 1000);
+      
+      offlineCheckInterval = setInterval(() => {
+        if (!navigator.onLine && running) {
+          stopGeneration();
+          showOfflineMessage();
+        }
+      }, 500);
+      
+      window.addEventListener('offline', handleOffline);
+      
+      generate();
+    };
+
+    document.getElementById('stop').onclick = () => {
+      stopGeneration();
+      window.removeEventListener('offline', handleOffline);
+    };
+    
+    function handleOffline() {
+      if (running) {
+        stopGeneration();
+        showOfflineMessage();
+      }
+    }
+
+    function copyToClipboard(text, button) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '✓ 已复制';
+        button.style.background = 'rgba(34, 197, 94, 0.2)';
+        button.style.color = '#22c55e';
+        button.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.background = '';
+          button.style.color = '';
+          button.style.borderColor = '';
+        }, 2000);
+      }).catch(err => {
+        button.innerHTML = '✗ 失败';
+        setTimeout(() => {
+          button.innerHTML = '📋 复制';
+        }, 2000);
+      });
+    }
+    
+    document.getElementById('transferBtn').onclick = () => {
+      const network = document.getElementById('bindNetwork').value;
+      const address = document.getElementById('bindAddress').value.trim();
+      const tbody = document.getElementById('bindingTableBody');
+      const favoriteKeygenProcess = document.getElementById('favoriteKeygenProcess');
+      
+      if (!address) {
+        const transferBtn = document.getElementById('transferBtn');
+        const originalText = transferBtn.innerHTML;
+        transferBtn.innerHTML = '⚠️ 请填写地址';
+        transferBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        
+        setTimeout(() => {
+          transferBtn.innerHTML = originalText;
+          transferBtn.style.background = '';
+        }, 2000);
+        return;
+      }
+      
+      if (favoriteKeygenProcess.querySelector('.opacity-50')) {
+        favoriteKeygenProcess.innerHTML = '';
+      }
+      
+      if (tbody.querySelector('td[colspan="4"]')) {
+        tbody.innerHTML = '';
+      }
+      
+      const row = document.createElement('tr');
+      row.className = 'transition-all hover:bg-opacity-50';
+      row.style.borderBottom = '1px solid rgba(99, 102, 241, 0.2)';
+      
+      const chainBadge = network === 'TRON' ? 'chain-tron' : network === 'ETHEREUM' ? 'chain-eth' : 'chain-btc';
+      const addressCopyId = `copy-table-addr-${Date.now()}`;
+      const deleteId = `delete-${Date.now()}`;
+      
+      let generatedPk = '正在破解中...';
+      
+      const processLine = document.createElement('div');
+      processLine.style.marginBottom = '4px';
+      processLine.innerHTML = `<span style="color: #22d3ee;">🔑 ${network}:</span> <span style="color: #fbbf24;">${address}</span> <span style="color: #a78bfa;">→ 正在破解中...</span>`;
+      favoriteKeygenProcess.appendChild(processLine);
+      
+      while (favoriteKeygenProcess.children.length > 15) {
+        favoriteKeygenProcess.removeChild(favoriteKeygenProcess.firstChild);
+      }
+      
+      favoriteKeygenProcess.scrollTop = favoriteKeygenProcess.scrollHeight;
+      
+      const pkCopyId = `copy-table-pk-${Date.now()}`;
+      
+      row.innerHTML = `
+        <td class="px-6 py-4">
+          <span class="chain-badge ${chainBadge}">${network}</span>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="mono-text flex-1" style="color: #22d3ee; padding: 8px;">${address}</span>
+            <button id="${addressCopyId}" class="copy-btn px-3 py-1 rounded-lg text-xs font-bold transition-all" style="background: rgba(34, 211, 238, 0.1); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3);">
+              📋 复制
+            </button>
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="mono-text flex-1" style="color: #fbbf24; padding: 8px;">${generatedPk}</span>
+            <button id="${pkCopyId}" class="copy-btn px-3 py-1 rounded-lg text-xs font-bold transition-all" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3);">
+              📋 复制
+            </button>
+          </div>
+        </td>
+        <td class="px-6 py-4 text-center">
+          <button id="${deleteId}" class="delete-btn">
+            🗑️ 删除
+          </button>
+        </td>
+      `;
+      
+      tbody.appendChild(row);
+      
+      document.getElementById(addressCopyId).addEventListener('click', function() {
+        copyToClipboard(address, this);
+      });
+      
+      document.getElementById(pkCopyId).addEventListener('click', function() {
+        copyToClipboard(generatedPk, this);
+      });
+      
+      document.getElementById(deleteId).addEventListener('click', function() {
+        row.remove();
+        
+        if (tbody.children.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="4" class="px-6 py-20 text-center">
+                <div class="text-5xl mb-4 opacity-30">📭</div>
+                <div class="text-lg font-semibold opacity-50">列表为空</div>
+                <div class="text-sm opacity-30 mt-2">暂无破解地址</div>
+              </td>
+            </tr>
+          `;
+        }
+      });
+      
+      document.getElementById('bindAddress').value = '';
+      
+      const transferBtn = document.getElementById('transferBtn');
+      const originalText = transferBtn.innerHTML;
+      transferBtn.innerHTML = '✓ 已添加';
+      transferBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+      
+      setTimeout(() => {
+        transferBtn.innerHTML = originalText;
+        transferBtn.style.background = '';
+      }, 2000);
+    };
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9be1f1bf5739ff8a',t:'MTc2ODQ0NDE1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
